@@ -4,7 +4,7 @@
 
 <!-- Add your project banner or screenshot here -->
 
-![image](YOUR_SCREENSHOT_LINK_HERE)
+![AI Resume ATS Score Checker Screenshot](https://drive.google.com/file/d/1pmK91HjBlwrTwglrTQ5YgLEnLqTY4Rdq/view?usp=sharing)
 
 ---
 
