@@ -1,0 +1,14 @@
+{
+  "name": "ai-resume-ats-checker-root",
+  "version": "1.0.0",
+  "description": "Root orchestrator for MERN AI Resume ATS Score Checker",
+  "scripts": {
+    "setup": "npm install && npm install --prefix server && npm install --prefix client",
+    "server": "npm start --prefix server",
+    "client": "npm run dev --prefix client",
+    "dev": "npx concurrently \"npm run server\" \"npm run client\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
