@@ -5,7 +5,8 @@ let isConnected = false;
 const connectDB = async () => {
   const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/Ai-Resume';
   
-  console.log(`[Database] Attempting connection to MongoDB at: ${mongoURI}`);
+  const maskedURI = mongoURI.replace(/(mongodb(?:\+srv)?:\/\/[^:]+:)[^@]+(@)/, '$1****$2');
+  console.log(`[Database] Attempting connection to MongoDB at: ${maskedURI}`);
   
   try {
     // Attempt Mongoose connection with a short timeout so it doesn't hang forever

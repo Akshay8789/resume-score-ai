@@ -73,9 +73,10 @@ if (process.env.NODE_ENV === 'production') {
 // Global Error Handler
 app.use((err, req, res, next) => {
   console.error('[Server Error]', err);
+  const isProd = process.env.NODE_ENV === 'production';
   res.status(500).json({
     success: false,
-    message: err.message || 'Internal server error occurred.'
+    message: isProd ? 'An internal server error occurred.' : (err.message || 'Internal server error.')
   });
 });
 
