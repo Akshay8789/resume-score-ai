@@ -26,7 +26,7 @@ function App() {
   const [files, setFiles] = useState([]);
   const [jobTitle, setJobTitle] = useState('');
   const [jobDescription, setJobDescription] = useState('');
-  const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
+  const [apiKey, setApiKey] = useState('');
 
   // UI States
   const [isDragActive, setIsDragActive] = useState(false);
@@ -115,16 +115,14 @@ function App() {
   };
 
   const saveApiKey = () => {
-    localStorage.setItem('gemini_api_key', apiKey);
     setShowConfig(false);
-    alert('Gemini API Key saved locally in your browser!');
+    alert('Gemini API Key set for this session!');
   };
 
   const clearApiKey = () => {
     setApiKey('');
-    localStorage.removeItem('gemini_api_key');
     setShowConfig(false);
-    alert('Gemini API Key removed.');
+    alert('Gemini API Key cleared.');
   };
 
   // Run ATS Analysis
@@ -143,14 +141,8 @@ function App() {
     formData.append('jobDescription', jobDescription);
 
     try {
-      const headers = {};
-      if (apiKey) {
-        headers['x-gemini-key'] = apiKey;
-      }
-
       const response = await fetch('/api/analyze', {
         method: 'POST',
-        headers: headers,
         body: formData
       });
 
@@ -295,7 +287,7 @@ function App() {
                   <button className="btn-primary" style={{ padding: '0.45rem', fontSize: '0.8rem' }} onClick={saveApiKey}>
                     <Check size={14} /> Save
                   </button>
-                  {localStorage.getItem('gemini_api_key') && (
+                  {apiKey && (
                     <button
                       className="btn-primary"
                       style={{ padding: '0.45rem', fontSize: '0.8rem', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--color-error)', border: '1px solid rgba(239, 68, 68, 0.2)', boxShadow: 'none' }}

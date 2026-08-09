@@ -293,7 +293,7 @@ const analyzeResumes = async (req, res) => {
     }
 
     const { jobDescription, jobTitle } = req.body;
-    const apiKey = process.env.GEMINI_API_KEY || req.headers['x-gemini-key'];
+    const apiKey = process.env.GEMINI_API_KEY;
     const results = [];
 
     for (const file of req.files) {
