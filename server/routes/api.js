@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const rateLimit = require('express-rate-limit');
 const { analyzeResumes } = require('../controllers/parserController');
 const Resume = require('../models/Resume');
@@ -12,6 +13,36 @@ const analyzeLimiter = rateLimit({
   max: 15, // Max 15 resume scans per IP per window
   message: { success: false, message: 'Too many resume requests. Please try again later.' }
 });
+
+// PDF Magic Bytes: %PDF (0x25 0x50 0x44 0x46)
+// DOCX Magic Bytes (ZIP header): PK\x03\x04 (0x50 0x4B 0x03 0x04)
+const validateMagicBytes = (buffer) => {
+  if (!buffer || buffer.length < 4) return false;
+  const header = buffer.toString('hex', 0, 4);
+  return header === '25504446' || header === '504b0304';
+};
+
+const validateUploadedFiles = (req, res, next) => {
+  if (!req.files || req.files.length === 0) return next();
+
+  for (const file of req.files) {
+    try {
+      const buffer = fs.readFileSync(file.path);
+      if (!validateMagicBytes(buffer)) {
+        req.files.forEach(f => {
+          try { fs.unlinkSync(f.path); } catch (e) {}
+        });
+        return res.status(400).json({
+          success: false,
+          message: `Invalid file format for ${file.originalname}. Binary header signature check failed.`
+        });
+      }
+    } catch (err) {
+      return res.status(500).json({ success: false, message: 'File validation error.' });
+    }
+  }
+  next();
+};
 
 // Multer Storage Configuration
 const storage = multer.diskStorage({
@@ -46,7 +77,7 @@ const upload = multer({
 });
 
 // Upload and analyze resumes route
-router.post('/analyze', analyzeLimiter, upload.array('resumes', 5), analyzeResumes);
+router.post('/analyze', analyzeLimiter, upload.array('resumes', 5), validateUploadedFiles, analyzeResumes);
 
 // Fetch analysis history route
 router.get('/history', async (req, res) => {
