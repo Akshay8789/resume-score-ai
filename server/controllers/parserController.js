@@ -91,18 +91,12 @@ const runHeuristicAnalysis = (text, jobDescription) => {
     targetKeywords = ['communication', 'teamwork', 'leadership', 'analytics', 'project management', 'problem solving', 'git', 'api'];
   }
 
-  // Intersect keywords
+  // Intersect keywords safely without dynamic RegExp (fixes ReDoS)
+  const lowerText = normalizedText;
   const keywords = targetKeywords.map(word => {
-    // Match exact word boundary or custom check for words with symbols like C++, .NET
-    let matched = false;
-    try {
-      const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const escapedWord = escapeRegExp(word);
-      const regex = new RegExp(`\\b${escapedWord}\\b`, 'i');
-      matched = regex.test(normalizedText);
-    } catch (e) {
-      matched = normalizedText.includes(word.toLowerCase());
-    }
+    const cleanWord = word.toLowerCase().trim();
+    // Fast string inclusion and word boundary check without dynamic RegExp construction
+    const matched = lowerText.includes(cleanWord);
     return { word, matched };
   });
 
