@@ -320,14 +320,14 @@ const analyzeResumes = async (req, res) => {
         analysisResult = runHeuristicAnalysis(extractedText, jobDescription);
       }
 
-      // Format payload to save/return
+      // Format payload to save/return (redact unencrypted candidate PII)
       const resumePayload = {
         fileName: file.originalname,
         fileSize: file.size,
         fileType: fileType,
         jobTitle: jobTitle || 'General Application',
         targetJobDescription: jobDescription || '',
-        parsedText: extractedText.slice(0, 5000), // store snippet/full text (safe length)
+        parsedText: '[REDACTED_PII]', // Redact candidate PII from public payloads
         atsScore: analysisResult.atsScore,
         sections: analysisResult.sections,
         keywords: analysisResult.keywords,
