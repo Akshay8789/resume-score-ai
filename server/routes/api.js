@@ -79,18 +79,21 @@ const upload = multer({
 // Upload and analyze resumes route
 router.post('/analyze', analyzeLimiter, upload.array('resumes', 5), validateUploadedFiles, analyzeResumes);
 
-// Fetch analysis history route
+// Fetch analysis history route (scoped to user to prevent IDOR)
 router.get('/history', async (req, res) => {
   try {
+    const userId = req.user?.id || req.headers['x-user-id'] || 'default_user';
     const dbConnected = getStatus();
     let history = [];
 
     if (dbConnected) {
-      // Fetch history from MongoDB (sorted newest first)
-      history = await Resume.find().sort({ uploadedAt: -1 }).select('-parsedText');
+      // Fetch user-scoped history from MongoDB (sorted newest first)
+      history = await Resume.find({ userId }).sort({ uploadedAt: -1 }).select('-parsedText');
     } else {
-      // Fallback: Fetch history from local in-memory store
-      history = (global.inMemoryStore || []).map(({ parsedText, ...rest }) => rest);
+      // Fallback: Fetch history from local in-memory store for current user
+      history = (global.inMemoryStore || [])
+        .filter(item => !item.userId || item.userId === userId)
+        .map(({ parsedText, ...rest }) => rest);
       // Sort newest first
       history.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
     }
@@ -109,27 +112,30 @@ router.get('/history', async (req, res) => {
   }
 });
 
-// Delete a resume analysis entry route
+// Delete a resume analysis entry route (ownership protected against IDOR)
 router.delete('/resume/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user?.id || req.headers['x-user-id'] || 'default_user';
     const dbConnected = getStatus();
     let deleted = false;
 
     if (dbConnected) {
-      const result = await Resume.findByIdAndDelete(id);
+      const result = await Resume.findOneAndDelete({ _id: id, userId });
       deleted = !!result;
     } else {
-      // Fallback: Delete from local in-memory store
+      // Fallback: Delete from local in-memory store if belonging to user
       const initialLength = (global.inMemoryStore || []).length;
-      global.inMemoryStore = (global.inMemoryStore || []).filter(item => item._id !== id);
+      global.inMemoryStore = (global.inMemoryStore || []).filter(
+        item => !(item._id === id && (!item.userId || item.userId === userId))
+      );
       deleted = (global.inMemoryStore || []).length < initialLength;
     }
 
     if (deleted) {
       res.json({ success: true, message: 'Resume analysis deleted successfully.' });
     } else {
-      res.status(404).json({ success: false, message: 'Resume entry not found.' });
+      res.status(404).json({ success: false, message: 'Resume entry not found or unauthorized.' });
     }
   } catch (error) {
     console.error('[Delete Resume Route Error]', error);

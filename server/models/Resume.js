@@ -19,6 +19,11 @@ const FormattingMetricSchema = new mongoose.Schema({
 }, { _id: false });
 
 const ResumeSchema = new mongoose.Schema({
+  userId: {
+    type: String,
+    default: 'default_user',
+    index: true
+  },
   fileName: {
     type: String,
     required: true
