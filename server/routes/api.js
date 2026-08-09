@@ -2,9 +2,16 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
+const rateLimit = require('express-rate-limit');
 const { analyzeResumes } = require('../controllers/parserController');
 const Resume = require('../models/Resume');
 const { getStatus } = require('../config/db');
+
+const analyzeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 15, // Max 15 resume scans per IP per window
+  message: { success: false, message: 'Too many resume requests. Please try again later.' }
+});
 
 // Multer Storage Configuration
 const storage = multer.diskStorage({
@@ -39,7 +46,7 @@ const upload = multer({
 });
 
 // Upload and analyze resumes route
-router.post('/analyze', upload.array('resumes', 5), analyzeResumes);
+router.post('/analyze', analyzeLimiter, upload.array('resumes', 5), analyzeResumes);
 
 // Fetch analysis history route
 router.get('/history', async (req, res) => {
