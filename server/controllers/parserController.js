@@ -320,8 +320,9 @@ const analyzeResumes = async (req, res) => {
         analysisResult = runHeuristicAnalysis(extractedText, jobDescription);
       }
 
-      // Format payload to save/return (redact unencrypted candidate PII)
+      // Format payload to save/return (redact unencrypted candidate PII & link userId)
       const resumePayload = {
+        userId: req.user?.id || req.headers['x-user-id'] || 'default_user',
         fileName: file.originalname,
         fileSize: file.size,
         fileType: fileType,
